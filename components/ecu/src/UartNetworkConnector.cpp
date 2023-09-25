@@ -23,7 +23,7 @@ void writeDataToUart(Bytes const& data, Byte const numberOfUartPorts)
         cStyleArray[i] = data[i];
     }
 
-    size_t sendLen = uart_write_bytes(numberOfUartPorts, cStyleArray, size);
+    size_t sendLen = uart_write_bytes(UART_NUM_1, cStyleArray, size);
 
     if (sendLen != size)
     {
@@ -56,7 +56,7 @@ void UartNetworkConnector::connect()
 {
     size_t const bufferSize = 1024;
 
-    auto status = uart_driver_install(m_numberOfUartPorts, bufferSize, bufferSize, 0, nullptr, 0);
+    auto status = uart_driver_install(UART_NUM_1, bufferSize, bufferSize, 0, nullptr, 0);
     auto errorCode = ErrorCode::EspStatusCodeToErrorCode(status);
     if (errorCode != ErrorCode::Enum::Success)
     {
@@ -76,14 +76,14 @@ void UartNetworkConnector::connect()
         .rx_flow_ctrl_thresh = 0,
         .source_clk = UART_SCLK_DEFAULT};
 
-    status = uart_param_config(m_numberOfUartPorts, &uart_config);
+    status = uart_param_config(UART_NUM_1, &uart_config);
     errorCode = ErrorCode::EspStatusCodeToErrorCode(status);
     if (errorCode != ErrorCode::Enum::Success)
     {
         throw ECU::NetworkException("Write error", errorCode);
     }
 
-    status = uart_set_pin(m_numberOfUartPorts, m_numberOfTxPin, m_numberOfRxPin, -1, -1);
+    status = uart_set_pin(UART_NUM_1, m_numberOfTxPin, m_numberOfRxPin, -1, -1);
     errorCode = ErrorCode::EspStatusCodeToErrorCode(status);
     if (errorCode != ErrorCode::Enum::Success)
     {
@@ -100,7 +100,7 @@ Byte UartNetworkConnector::readByte()
     size_t requiredLength = 1;
 
     auto delay_InUS = calculateDelayForWaitDataFromUartInMilliseconds(requiredLength, m_baudRate);
-    auto resultLength = uart_read_bytes(m_numberOfUartPorts, &resultData, requiredLength, (delay_InUS / portTICK_PERIOD_MS));
+    auto resultLength = uart_read_bytes(UART_NUM_1, &resultData, requiredLength, (delay_InUS / portTICK_PERIOD_MS));
 
     if (resultLength != requiredLength) {
         // TODO Uart read data exception
@@ -116,7 +116,7 @@ Bytes UartNetworkConnector::readBytes(size_t requiredLength)
     Bytes resultData;
 
     auto delay_InUS = calculateDelayForWaitDataFromUartInMilliseconds(requiredLength, m_baudRate);
-    auto resultLength = uart_read_bytes(m_numberOfUartPorts, &resultData, requiredLength, (delay_InUS / portTICK_PERIOD_MS));
+    auto resultLength = uart_read_bytes(UART_NUM_1, &resultData, requiredLength, (delay_InUS / portTICK_PERIOD_MS));
 
     if (resultLength != requiredLength) {
         // TODO Uart read data exception
@@ -132,7 +132,7 @@ void UartNetworkConnector::write(Bytes const& data)
     /**
      * Input buffer clear
      */
-    auto const status = uart_flush(m_numberOfUartPorts);
+    auto const status = uart_flush(UART_NUM_1);
 
     auto const errorCode = ErrorCode::EspStatusCodeToErrorCode(status);
 
@@ -155,7 +155,7 @@ size_t UartNetworkConnector::getBufferSize() const
 {
     size_t bufferSize = 0;
 
-    uart_get_buffered_data_len(m_numberOfUartPorts, &bufferSize);
+    uart_get_buffered_data_len(UART_NUM_1, &bufferSize);
 
     return bufferSize;
 }
